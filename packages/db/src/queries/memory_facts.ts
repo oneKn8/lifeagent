@@ -38,6 +38,14 @@ export async function topMemoryFacts(db: Db, userId: string, n: number): Promise
     .limit(n);
 }
 
+export async function deleteMemoryFact(db: Db, userId: string, factId: string): Promise<boolean> {
+  const result = await db
+    .delete(memoryFacts)
+    .where(and(eq(memoryFacts.userId, userId), eq(memoryFacts.id, factId)))
+    .returning();
+  return result.length > 0;
+}
+
 /**
  * v1: simple case-insensitive LIKE search over `body`, scoped to user.
  */

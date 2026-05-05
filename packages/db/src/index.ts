@@ -3,6 +3,7 @@ export { createDbClient, type Db } from "./client";
 export { makeTestDb } from "./test-helpers";
 export {
   addMemoryFact,
+  deleteMemoryFact,
   topMemoryFacts,
   searchMemoryFacts,
   type MemoryFact,
