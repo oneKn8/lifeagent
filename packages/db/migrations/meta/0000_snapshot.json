@@ -73,12 +73,8 @@
           "name": "cron_jobs_user_id_users_id_fk",
           "tableFrom": "cron_jobs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -215,12 +211,8 @@
           "name": "events_user_id_users_id_fk",
           "tableFrom": "events",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -293,12 +285,8 @@
           "name": "habits_user_id_users_id_fk",
           "tableFrom": "habits",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -364,12 +352,8 @@
           "name": "integrations_user_id_users_id_fk",
           "tableFrom": "integrations",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -443,12 +427,8 @@
           "name": "memory_facts_user_id_users_id_fk",
           "tableFrom": "memory_facts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -456,12 +436,8 @@
           "name": "memory_facts_source_message_id_messages_id_fk",
           "tableFrom": "memory_facts",
           "tableTo": "messages",
-          "columnsFrom": [
-            "source_message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_message_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -533,12 +509,8 @@
           "name": "messages_user_id_users_id_fk",
           "tableFrom": "messages",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -546,12 +518,8 @@
           "name": "messages_related_event_id_events_id_fk",
           "tableFrom": "messages",
           "tableTo": "events",
-          "columnsFrom": [
-            "related_event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["related_event_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -607,9 +575,7 @@
         "users_telegram_id_unique": {
           "name": "users_telegram_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "telegram_id"
-          ]
+          "columns": ["telegram_id"]
         }
       },
       "policies": {},
@@ -683,12 +649,8 @@
           "name": "verification_runs_user_id_users_id_fk",
           "tableFrom": "verification_runs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -696,12 +658,8 @@
           "name": "verification_runs_event_id_events_id_fk",
           "tableFrom": "verification_runs",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -717,35 +675,17 @@
     "public.cron_kind": {
       "name": "cron_kind",
       "schema": "public",
-      "values": [
-        "pre_ping",
-        "post_ping",
-        "morning_brief",
-        "nightly_summary",
-        "verify"
-      ]
+      "values": ["pre_ping", "post_ping", "morning_brief", "nightly_summary", "verify"]
     },
     "public.event_status": {
       "name": "event_status",
       "schema": "public",
-      "values": [
-        "planned",
-        "in_progress",
-        "done",
-        "skipped",
-        "slipped",
-        "blocked"
-      ]
+      "values": ["planned", "in_progress", "done", "skipped", "slipped", "blocked"]
     },
     "public.verification_status": {
       "name": "verification_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "consistent",
-        "contradicted",
-        "inconclusive"
-      ]
+      "values": ["pending", "consistent", "contradicted", "inconclusive"]
     }
   },
   "schemas": {},

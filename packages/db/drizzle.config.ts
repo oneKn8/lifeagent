@@ -5,8 +5,6 @@ export default {
   out: "./migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url:
-      process.env.DATABASE_URL ??
-      "postgres://lifeagent:lifeagent@localhost:5544/lifeagent",
+    url: process.env.DATABASE_URL ?? "postgres://lifeagent:lifeagent@localhost:5544/lifeagent",
   },
 } satisfies Config;

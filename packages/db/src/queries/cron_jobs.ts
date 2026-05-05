@@ -14,10 +14,7 @@ export interface CreateCronJobInput {
   status?: string;
 }
 
-export async function createCronJob(
-  db: Db,
-  input: CreateCronJobInput,
-): Promise<CronJob> {
+export async function createCronJob(db: Db, input: CreateCronJobInput): Promise<CronJob> {
   const [row] = await db
     .insert(cronJobs)
     .values({
@@ -37,16 +34,10 @@ export async function getDueCronJobs(db: Db, now: Date): Promise<CronJob[]> {
   return db
     .select()
     .from(cronJobs)
-    .where(
-      and(eq(cronJobs.status, "active"), lte(cronJobs.nextRunAt, now)),
-    );
+    .where(and(eq(cronJobs.status, "active"), lte(cronJobs.nextRunAt, now)));
 }
 
-export async function markCronJobRan(
-  db: Db,
-  id: string,
-  nextRunAt: Date,
-): Promise<CronJob | null> {
+export async function markCronJobRan(db: Db, id: string, nextRunAt: Date): Promise<CronJob | null> {
   const [row] = await db
     .update(cronJobs)
     .set({

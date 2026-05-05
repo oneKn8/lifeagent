@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import type { Db } from "../client";
 import { makeTestDb } from "../test-helpers";
-import {
-  addMemoryFact,
-  searchMemoryFacts,
-  topMemoryFacts,
-} from "./memory_facts";
+import { addMemoryFact, searchMemoryFacts, topMemoryFacts } from "./memory_facts";
 import { createUser } from "./users";
 
 describe("memory_facts queries", () => {

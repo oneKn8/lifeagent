@@ -20,10 +20,7 @@ export interface CreateEventInput {
   notes?: string;
 }
 
-export async function createEvent(
-  db: Db,
-  input: CreateEventInput,
-): Promise<Event> {
+export async function createEvent(db: Db, input: CreateEventInput): Promise<Event> {
   const [row] = await db
     .insert(events)
     .values({
@@ -44,10 +41,7 @@ export async function createEvent(
   return row;
 }
 
-export async function getEventById(
-  db: Db,
-  id: string,
-): Promise<Event | null> {
+export async function getEventById(db: Db, id: string): Promise<Event | null> {
   const rows = await db.select().from(events).where(eq(events.id, id)).limit(1);
   return rows[0] ?? null;
 }
@@ -56,11 +50,7 @@ export async function getEventById(
  * Returns events for the user where the start_at falls within the UTC day
  * specified by `day` (anchored at midnight UTC).
  */
-export async function getEventsForDay(
-  db: Db,
-  userId: string,
-  day: Date,
-): Promise<Event[]> {
+export async function getEventsForDay(db: Db, userId: string, day: Date): Promise<Event[]> {
   const start = new Date(day);
   start.setUTCHours(0, 0, 0, 0);
   const end = new Date(start);
@@ -68,13 +58,7 @@ export async function getEventsForDay(
   return db
     .select()
     .from(events)
-    .where(
-      and(
-        eq(events.userId, userId),
-        gte(events.startAt, start),
-        lte(events.startAt, end),
-      ),
-    );
+    .where(and(eq(events.userId, userId), gte(events.startAt, start), lte(events.startAt, end)));
 }
 
 export interface UpdateEventStatusExtras {
@@ -112,10 +96,7 @@ export async function updateEventStatus(
 /**
  * Events whose pre_ping_at <= beforeTime, where pre_ping_sent_at is still null.
  */
-export async function getUpcomingEventsNeedingPings(
-  db: Db,
-  beforeTime: Date,
-): Promise<Event[]> {
+export async function getUpcomingEventsNeedingPings(db: Db, beforeTime: Date): Promise<Event[]> {
   return db
     .select()
     .from(events)

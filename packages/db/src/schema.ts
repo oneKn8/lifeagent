@@ -43,9 +43,7 @@ export const users = pgTable("users", {
   telegramId: text("telegram_id").unique(),
   email: text("email"),
   tz: text("tz").notNull().default("America/Chicago"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const events = pgTable("events", {
@@ -65,16 +63,10 @@ export const events = pgTable("events", {
   postPingSentAt: timestamp("post_ping_sent_at", { withTimezone: true }),
   userReplyText: text("user_reply_text"),
   parsedState: jsonb("parsed_state"),
-  verificationStatus: verificationStatus("verification_status")
-    .notNull()
-    .default("pending"),
+  verificationStatus: verificationStatus("verification_status").notNull().default("pending"),
   notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const messages = pgTable("messages", {
@@ -89,9 +81,7 @@ export const messages = pgTable("messages", {
   relatedEventId: uuid("related_event_id").references(() => events.id, {
     onDelete: "set null",
   }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const memoryFacts = pgTable("memory_facts", {
@@ -105,12 +95,8 @@ export const memoryFacts = pgTable("memory_facts", {
   sourceMessageId: uuid("source_message_id").references(() => messages.id, {
     onDelete: "set null",
   }),
-  lastUsedAt: timestamp("last_used_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const habits = pgTable("habits", {
@@ -165,7 +151,5 @@ export const verificationRuns = pgTable("verification_runs", {
   confidence: doublePrecision("confidence"),
   summary: text("summary"),
   evidence: jsonb("evidence"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

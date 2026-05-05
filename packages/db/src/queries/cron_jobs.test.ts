@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import type { Db } from "../client";
 import { makeTestDb } from "../test-helpers";
-import {
-  createCronJob,
-  getDueCronJobs,
-  markCronJobRan,
-} from "./cron_jobs";
+import { createCronJob, getDueCronJobs, markCronJobRan } from "./cron_jobs";
 import { createUser } from "./users";
 
 describe("cron_jobs queries", () => {

@@ -12,9 +12,7 @@ describe("users queries", () => {
 
   it("createUser inserts a user with defaults and returns it", async () => {
     const user = await createUser(db, { telegramId: "tg_123" });
-    expect(user.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
+    expect(user.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     expect(user.telegramId).toBe("tg_123");
     expect(user.email).toBeNull();
     expect(user.tz).toBe("America/Chicago");

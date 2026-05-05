@@ -13,10 +13,7 @@ export interface AddMemoryFactInput {
   lastUsedAt?: Date;
 }
 
-export async function addMemoryFact(
-  db: Db,
-  input: AddMemoryFactInput,
-): Promise<MemoryFact> {
+export async function addMemoryFact(db: Db, input: AddMemoryFactInput): Promise<MemoryFact> {
   const [row] = await db
     .insert(memoryFacts)
     .values({
@@ -32,11 +29,7 @@ export async function addMemoryFact(
   return row;
 }
 
-export async function topMemoryFacts(
-  db: Db,
-  userId: string,
-  n: number,
-): Promise<MemoryFact[]> {
+export async function topMemoryFacts(db: Db, userId: string, n: number): Promise<MemoryFact[]> {
   return db
     .select()
     .from(memoryFacts)
@@ -57,8 +50,6 @@ export async function searchMemoryFacts(
   return db
     .select()
     .from(memoryFacts)
-    .where(
-      and(eq(memoryFacts.userId, userId), ilike(memoryFacts.body, pattern)),
-    )
+    .where(and(eq(memoryFacts.userId, userId), ilike(memoryFacts.body, pattern)))
     .orderBy(desc(memoryFacts.lastUsedAt));
 }

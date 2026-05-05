@@ -24,12 +24,7 @@ export async function upsertIntegration(
   const existing = await db
     .select()
     .from(integrations)
-    .where(
-      and(
-        eq(integrations.userId, input.userId),
-        eq(integrations.kind, input.kind),
-      ),
-    )
+    .where(and(eq(integrations.userId, input.userId), eq(integrations.kind, input.kind)))
     .limit(1);
 
   if (existing[0]) {

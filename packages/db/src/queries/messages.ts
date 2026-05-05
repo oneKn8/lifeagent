@@ -13,10 +13,7 @@ export interface AppendMessageInput {
   relatedEventId?: string;
 }
 
-export async function appendMessage(
-  db: Db,
-  input: AppendMessageInput,
-): Promise<Message> {
+export async function appendMessage(db: Db, input: AppendMessageInput): Promise<Message> {
   const [row] = await db
     .insert(messages)
     .values({
@@ -32,11 +29,7 @@ export async function appendMessage(
   return row;
 }
 
-export async function recentMessages(
-  db: Db,
-  userId: string,
-  limit: number,
-): Promise<Message[]> {
+export async function recentMessages(db: Db, userId: string, limit: number): Promise<Message[]> {
   return db
     .select()
     .from(messages)

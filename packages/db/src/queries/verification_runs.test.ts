@@ -3,10 +3,7 @@ import type { Db } from "../client";
 import { makeTestDb } from "../test-helpers";
 import { createEvent } from "./events";
 import { createUser } from "./users";
-import {
-  getVerificationsForEvent,
-  recordVerificationRun,
-} from "./verification_runs";
+import { getVerificationsForEvent, recordVerificationRun } from "./verification_runs";
 
 describe("verification_runs queries", () => {
   let db: Db;

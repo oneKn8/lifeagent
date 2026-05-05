@@ -49,10 +49,7 @@ describe("events queries", () => {
     const found = await getEventById(db, ev.id);
     expect(found?.id).toBe(ev.id);
 
-    const notFound = await getEventById(
-      db,
-      "00000000-0000-0000-0000-000000000000",
-    );
+    const notFound = await getEventById(db, "00000000-0000-0000-0000-000000000000");
     expect(notFound).toBeNull();
   });
 
@@ -123,10 +120,7 @@ describe("events queries", () => {
       endAt: new Date("2026-05-04T16:00:00Z"),
     });
 
-    const rows = await getUpcomingEventsNeedingPings(
-      db,
-      new Date("2026-05-04T15:00:00Z"),
-    );
+    const rows = await getUpcomingEventsNeedingPings(db, new Date("2026-05-04T15:00:00Z"));
     const ids = rows.map((r) => r.id);
     expect(ids).toContain(dueEvent.id);
     expect(rows.length).toBe(1);
