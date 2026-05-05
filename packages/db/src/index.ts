@@ -19,11 +19,14 @@ export {
   createEvent,
   getEventById,
   getEventsForDay,
+  getEventsBySourceInRange,
+  updateEvent,
   updateEventStatus,
   getUpcomingEventsNeedingPings,
   type Event,
   type EventStatus,
   type CreateEventInput,
+  type UpdateEventPatch,
   type UpdateEventStatusExtras,
 } from "./queries/events";
 export {

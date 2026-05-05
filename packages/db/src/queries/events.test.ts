@@ -4,8 +4,10 @@ import { makeTestDb } from "../test-helpers";
 import {
   createEvent,
   getEventById,
+  getEventsBySourceInRange,
   getEventsForDay,
   getUpcomingEventsNeedingPings,
+  updateEvent,
   updateEventStatus,
 } from "./events";
 import { createUser } from "./users";
@@ -139,5 +141,80 @@ describe("events queries", () => {
     const ids = rows.map((r) => r.id);
     expect(ids).toContain(dueEvent.id);
     expect(rows.length).toBe(1);
+  });
+
+  it("updateEvent applies a partial patch and returns the updated row", async () => {
+    const user = await seedUser(db, "tg_upd_1");
+    const ev = await createEvent(db, {
+      userId: user.id,
+      source: "manual",
+      title: "original",
+      startAt: new Date("2026-05-04T10:00:00Z"),
+      endAt: new Date("2026-05-04T11:00:00Z"),
+    });
+    const updated = await updateEvent(db, ev.id, {
+      title: "renamed",
+      startAt: new Date("2026-05-04T09:00:00Z"),
+      endAt: new Date("2026-05-04T10:00:00Z"),
+      notes: "moved",
+    });
+    expect(updated?.title).toBe("renamed");
+    expect(updated?.startAt.toISOString()).toBe("2026-05-04T09:00:00.000Z");
+    expect(updated?.endAt.toISOString()).toBe("2026-05-04T10:00:00.000Z");
+    expect(updated?.notes).toBe("moved");
+  });
+
+  it("updateEvent returns null for an unknown id", async () => {
+    const result = await updateEvent(db, "00000000-0000-0000-0000-000000000000", {
+      title: "x",
+    });
+    expect(result).toBeNull();
+  });
+
+  it("updateEvent can clear pre/post ping timestamps via null", async () => {
+    const user = await seedUser(db, "tg_upd_2");
+    const ev = await createEvent(db, {
+      userId: user.id,
+      source: "manual",
+      title: "t",
+      startAt: new Date("2026-05-04T10:00:00Z"),
+      endAt: new Date("2026-05-04T11:00:00Z"),
+      prePingAt: new Date("2026-05-04T09:55:00Z"),
+      postPingAt: new Date("2026-05-04T11:00:00Z"),
+    });
+    const cleared = await updateEvent(db, ev.id, { prePingAt: null, postPingAt: null });
+    expect(cleared?.prePingAt).toBeNull();
+    expect(cleared?.postPingAt).toBeNull();
+  });
+
+  it("getEventsBySourceInRange filters by source and start_at window", async () => {
+    const user = await seedUser(db, "tg_src_filter");
+    const wantedManual = await createEvent(db, {
+      userId: user.id,
+      source: "manual",
+      title: "wanted",
+      startAt: new Date("2026-05-04T10:00:00Z"),
+      endAt: new Date("2026-05-04T11:00:00Z"),
+    });
+    await createEvent(db, {
+      userId: user.id,
+      source: "gcal",
+      title: "wrong source",
+      startAt: new Date("2026-05-04T12:00:00Z"),
+      endAt: new Date("2026-05-04T13:00:00Z"),
+    });
+    await createEvent(db, {
+      userId: user.id,
+      source: "manual",
+      title: "out of range",
+      startAt: new Date("2026-06-01T10:00:00Z"),
+      endAt: new Date("2026-06-01T11:00:00Z"),
+    });
+
+    const rows = await getEventsBySourceInRange(db, user.id, "manual", {
+      start: new Date("2026-05-04T00:00:00Z"),
+      end: new Date("2026-05-05T00:00:00Z"),
+    });
+    expect(rows.map((r) => r.id)).toEqual([wantedManual.id]);
   });
 });

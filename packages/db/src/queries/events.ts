@@ -61,6 +61,28 @@ export async function getEventsForDay(db: Db, userId: string, day: Date): Promis
     .where(and(eq(events.userId, userId), gte(events.startAt, start), lt(events.startAt, end)));
 }
 
+/**
+ * Events for a user with the given source whose start_at falls in [start, end).
+ */
+export async function getEventsBySourceInRange(
+  db: Db,
+  userId: string,
+  source: string,
+  range: { start: Date; end: Date },
+): Promise<Event[]> {
+  return db
+    .select()
+    .from(events)
+    .where(
+      and(
+        eq(events.userId, userId),
+        eq(events.source, source),
+        gte(events.startAt, range.start),
+        lt(events.startAt, range.end),
+      ),
+    );
+}
+
 export interface UpdateEventStatusExtras {
   userReplyText?: string;
   notes?: string;
@@ -90,6 +112,35 @@ export async function updateEventStatus(
     })
     .where(eq(events.id, id))
     .returning();
+  return row ?? null;
+}
+
+export interface UpdateEventPatch {
+  title?: string;
+  startAt?: Date;
+  endAt?: Date;
+  notes?: string;
+  prePingAt?: Date | null;
+  postPingAt?: Date | null;
+}
+
+/**
+ * Generic partial update for an event's mutable fields. Returns null if the
+ * event id does not exist. Pings are nullable so a re-schedule can clear them.
+ */
+export async function updateEvent(
+  db: Db,
+  id: string,
+  patch: UpdateEventPatch,
+): Promise<Event | null> {
+  const set: Record<string, unknown> = { updatedAt: sql`now()` };
+  if (patch.title !== undefined) set.title = patch.title;
+  if (patch.startAt !== undefined) set.startAt = patch.startAt;
+  if (patch.endAt !== undefined) set.endAt = patch.endAt;
+  if (patch.notes !== undefined) set.notes = patch.notes;
+  if (patch.prePingAt !== undefined) set.prePingAt = patch.prePingAt;
+  if (patch.postPingAt !== undefined) set.postPingAt = patch.postPingAt;
+  const [row] = await db.update(events).set(set).where(eq(events.id, id)).returning();
   return row ?? null;
 }
 
