@@ -15,6 +15,7 @@ import {
 export const eventStatus = pgEnum("event_status", [
   "planned",
   "in_progress",
+  "partial",
   "done",
   "skipped",
   "slipped",

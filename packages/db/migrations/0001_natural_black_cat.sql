@@ -1,0 +1,1 @@
+ALTER TYPE "public"."event_status" ADD VALUE 'partial' BEFORE 'done';
