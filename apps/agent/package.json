@@ -1,0 +1,15 @@
+{
+  "name": "@lifeagent/agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outdir=dist",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@lifeagent/db": "workspace:*",
+    "@lifeagent/types": "workspace:*"
+  }
+}
