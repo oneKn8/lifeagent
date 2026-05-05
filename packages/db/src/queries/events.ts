@@ -62,6 +62,26 @@ export async function getEventsForDay(db: Db, userId: string, day: Date): Promis
 }
 
 /**
+ * Find an event by (userId, source, externalId). Used by source adapters to
+ * upsert without duplicating rows on resync.
+ */
+export async function getEventByExternalId(
+  db: Db,
+  userId: string,
+  source: string,
+  externalId: string,
+): Promise<Event | null> {
+  const rows = await db
+    .select()
+    .from(events)
+    .where(
+      and(eq(events.userId, userId), eq(events.source, source), eq(events.externalId, externalId)),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
  * Events for a user with the given source whose start_at falls in [start, end).
  */
 export async function getEventsBySourceInRange(
