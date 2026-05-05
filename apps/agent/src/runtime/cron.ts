@@ -4,6 +4,7 @@ import {
   type Db,
   cancelCronJob,
   createCronJob,
+  getCronJobById,
   getDueCronJobs,
   markCronJobRan,
   recordCronJobFailure,
@@ -87,6 +88,17 @@ export class CronScheduler {
 
   async cancel(jobId: string): Promise<void> {
     await cancelCronJob(this.db, jobId);
+  }
+
+  /**
+   * Force-run a specific job now, regardless of its `next_run_at`. Useful for
+   * tests, replays, and manual CLI triggers. Honors the `pre_cron_fire` hook
+   * and the same retry/failure semantics as a normal tick.
+   */
+  async runJob(jobId: string, now: Date = new Date()): Promise<"fired" | "failed" | "skipped"> {
+    const job = await getCronJobById(this.db, jobId);
+    if (!job) throw new Error(`runJob: cron job ${jobId} not found`);
+    return this.fireOne(job, now);
   }
 
   async start(): Promise<void> {
