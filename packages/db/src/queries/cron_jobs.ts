@@ -2,6 +2,8 @@ import { and, eq, isNotNull, lte, sql } from "drizzle-orm";
 import type { Db } from "../client";
 import { cronJobs } from "../schema";
 
+const ACTIVE = "active";
+
 export type CronJob = typeof cronJobs.$inferSelect;
 export type CronJobKind = CronJob["kind"];
 
@@ -89,6 +91,22 @@ export async function recordCronJobFailure(
     .where(eq(cronJobs.id, id))
     .returning();
   return row ?? null;
+}
+
+/**
+ * Returns active cron jobs whose payload contains `eventId` matching the given
+ * id. Optionally filter by kind (e.g. "pre_ping" or "post_ping").
+ */
+export async function getActiveCronJobsByEventId(
+  db: Db,
+  eventId: string,
+  kind?: CronJobKind,
+): Promise<CronJob[]> {
+  const matchPayload = sql`${cronJobs.payload}->>'eventId' = ${eventId}`;
+  const where = kind
+    ? and(eq(cronJobs.status, ACTIVE), matchPayload, eq(cronJobs.kind, kind))
+    : and(eq(cronJobs.status, ACTIVE), matchPayload);
+  return db.select().from(cronJobs).where(where);
 }
 
 export async function cancelCronJob(db: Db, id: string): Promise<CronJob | null> {

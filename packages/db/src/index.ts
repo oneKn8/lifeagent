@@ -33,6 +33,7 @@ export {
   createCronJob,
   getCronJobById,
   getDueCronJobs,
+  getActiveCronJobsByEventId,
   markCronJobRan,
   recordCronJobFailure,
   cancelCronJob,
