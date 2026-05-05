@@ -32,9 +32,7 @@ describe("ToolRegistry", () => {
         return input.n;
       },
     });
-    await expect(
-      r.dispatch("strict", { n: "not-a-number" }, { userId: "u" }),
-    ).rejects.toThrow();
+    await expect(r.dispatch("strict", { n: "not-a-number" }, { userId: "u" })).rejects.toThrow();
   });
 
   it("rejects double-registration of same tool name", () => {
@@ -69,7 +67,12 @@ describe("ToolRegistry", () => {
         return 0;
       },
     });
-    expect(r.list().map((t) => t.name).sort()).toEqual(["a", "b"]);
+    expect(
+      r
+        .list()
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual(["a", "b"]);
   });
 
   it("get() returns a registered tool by name and undefined otherwise", () => {

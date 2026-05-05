@@ -27,7 +27,7 @@ describe("SkillLoader", () => {
   it("loads a skill with frontmatter and body", async () => {
     await writeFile(
       join(dir, "persona.md"),
-      `---\nname: persona\ndescription: agent persona\ntype: persona\ntriggers:\n  - greeting\n  - hello\n---\nYou are a friendly assistant.\n`,
+      "---\nname: persona\ndescription: agent persona\ntype: persona\ntriggers:\n  - greeting\n  - hello\n---\nYou are a friendly assistant.\n",
     );
     loader = new SkillLoader({ skillsDir: dir });
     await loader.loadAll();
@@ -43,26 +43,29 @@ describe("SkillLoader", () => {
   it("findByTrigger returns skills containing the trigger", async () => {
     await writeFile(
       join(dir, "a.md"),
-      `---\nname: a\ndescription: \ntype: persona\ntriggers: [hello]\n---\nA body\n`,
+      "---\nname: a\ndescription: \ntype: persona\ntriggers: [hello]\n---\nA body\n",
     );
     await writeFile(
       join(dir, "b.md"),
-      `---\nname: b\ndescription: \ntype: persona\ntriggers: [hello, bye]\n---\nB body\n`,
+      "---\nname: b\ndescription: \ntype: persona\ntriggers: [hello, bye]\n---\nB body\n",
     );
     await writeFile(
       join(dir, "c.md"),
-      `---\nname: c\ndescription: \ntype: persona\ntriggers: [bye]\n---\nC body\n`,
+      "---\nname: c\ndescription: \ntype: persona\ntriggers: [bye]\n---\nC body\n",
     );
     loader = new SkillLoader({ skillsDir: dir });
     await loader.loadAll();
-    const matches = loader.findByTrigger("hello").map((s) => s.name).sort();
+    const matches = loader
+      .findByTrigger("hello")
+      .map((s) => s.name)
+      .sort();
     expect(matches).toEqual(["a", "b"]);
   });
 
   it("findByName returns the matching skill or undefined", async () => {
     await writeFile(
       join(dir, "x.md"),
-      `---\nname: x\ndescription: \ntype: persona\ntriggers: []\n---\nX body\n`,
+      "---\nname: x\ndescription: \ntype: persona\ntriggers: []\n---\nX body\n",
     );
     loader = new SkillLoader({ skillsDir: dir });
     await loader.loadAll();
@@ -73,7 +76,7 @@ describe("SkillLoader", () => {
   it("ignores non-md files", async () => {
     await writeFile(
       join(dir, "real.md"),
-      `---\nname: real\ndescription: \ntype: persona\ntriggers: []\n---\nbody\n`,
+      "---\nname: real\ndescription: \ntype: persona\ntriggers: []\n---\nbody\n",
     );
     await writeFile(join(dir, "notes.txt"), "ignore me");
     await writeFile(join(dir, "data.json"), "{}");
@@ -86,7 +89,7 @@ describe("SkillLoader", () => {
   it("throws on malformed frontmatter (missing required field)", async () => {
     await writeFile(
       join(dir, "broken.md"),
-      `---\ndescription: missing name\ntype: persona\ntriggers: []\n---\nbody\n`,
+      "---\ndescription: missing name\ntype: persona\ntriggers: []\n---\nbody\n",
     );
     loader = new SkillLoader({ skillsDir: dir });
     await expect(loader.loadAll()).rejects.toThrow(/broken\.md/);
@@ -96,7 +99,7 @@ describe("SkillLoader", () => {
     const file = join(dir, "live.md");
     await writeFile(
       file,
-      `---\nname: live\ndescription: v1\ntype: persona\ntriggers: [v1]\n---\nv1 body\n`,
+      "---\nname: live\ndescription: v1\ntype: persona\ntriggers: [v1]\n---\nv1 body\n",
     );
     loader = new SkillLoader({ skillsDir: dir, debounceMs: 50 });
     await loader.loadAll();
@@ -105,7 +108,7 @@ describe("SkillLoader", () => {
 
     await writeFile(
       file,
-      `---\nname: live\ndescription: v2\ntype: persona\ntriggers: [v2]\n---\nv2 body\n`,
+      "---\nname: live\ndescription: v2\ntype: persona\ntriggers: [v2]\n---\nv2 body\n",
     );
     // wait for debounce + reload
     await wait(400);

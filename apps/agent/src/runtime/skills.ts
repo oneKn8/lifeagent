@@ -132,7 +132,9 @@ export class SkillLoader {
       await this.loadFile(filename);
     } catch (err) {
       // surface via stderr but do not crash watcher
-      process.stderr.write(`SkillLoader reload failed for ${filename}: ${(err as Error).message}\n`);
+      process.stderr.write(
+        `SkillLoader reload failed for ${filename}: ${(err as Error).message}\n`,
+      );
     }
   }
 }
