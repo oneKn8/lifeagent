@@ -12,6 +12,7 @@
     "@lifeagent/db": "workspace:*",
     "@lifeagent/types": "workspace:*",
     "cron-parser": "^5.5.0",
+    "grammy": "^1.42.0",
     "gray-matter": "^4.0.3",
     "openai": "^6.36.0",
     "zod": "^4.4.3"
