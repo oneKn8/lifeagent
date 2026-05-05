@@ -1,8 +1,4 @@
-/**
- * Shared brain types. Phase 4 will provide the concrete brain implementation;
- * Phase 3 only depends on these interfaces so the loop and SDK can be tested
- * with mocks.
- */
+import type { ZodType } from "zod";
 
 export type ChatRole = "user" | "assistant" | "tool";
 
@@ -28,8 +24,12 @@ export interface ChatInput {
   system: string;
   messages: ChatMessage[];
   tools?: ToolDefinition[];
+  model?: string;
+  maxTokens?: number;
+  temperature?: number;
 }
 
 export interface Brain {
   chat(input: ChatInput): AsyncIterable<ChatChunk>;
+  parseStructured<T>(prompt: string, schema: ZodType<T>): Promise<T>;
 }

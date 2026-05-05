@@ -21,6 +21,9 @@ class MockBrain implements Brain {
     const turn = this.turns[this.calls.length - 1] ?? [{ type: "stop", reason: "exhausted" }];
     return chunkStream(turn);
   }
+  async parseStructured<T>(): Promise<T> {
+    throw new Error("not implemented in mock");
+  }
 }
 
 describe("AgentLoop", () => {

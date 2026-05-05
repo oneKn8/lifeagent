@@ -33,6 +33,9 @@ class StubBrain implements Brain {
     this.lastInput = input;
     return chunkStream(this.turn);
   }
+  async parseStructured<T>(): Promise<T> {
+    throw new Error("not implemented in stub");
+  }
 }
 
 async function makeSkillsTempDir(): Promise<string> {
