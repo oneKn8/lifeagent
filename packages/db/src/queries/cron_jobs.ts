@@ -1,4 +1,4 @@
-import { and, eq, lte, sql } from "drizzle-orm";
+import { and, eq, isNotNull, lte, sql } from "drizzle-orm";
 import type { Db } from "../client";
 import { cronJobs } from "../schema";
 
@@ -34,16 +34,67 @@ export async function getDueCronJobs(db: Db, now: Date): Promise<CronJob[]> {
   return db
     .select()
     .from(cronJobs)
-    .where(and(eq(cronJobs.status, "active"), lte(cronJobs.nextRunAt, now)));
+    .where(
+      and(
+        eq(cronJobs.status, "active"),
+        isNotNull(cronJobs.nextRunAt),
+        lte(cronJobs.nextRunAt, now),
+      ),
+    );
 }
 
-export async function markCronJobRan(db: Db, id: string, nextRunAt: Date): Promise<CronJob | null> {
+export async function getCronJobById(db: Db, id: string): Promise<CronJob | null> {
+  const rows = await db.select().from(cronJobs).where(eq(cronJobs.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Marks a job as having just run. Pass `nextRunAt = null` to disable a one-shot
+ * job (it sets status="done"). For recurring jobs, supply the next firing time.
+ */
+export async function markCronJobRan(
+  db: Db,
+  id: string,
+  nextRunAt: Date | null,
+): Promise<CronJob | null> {
   const [row] = await db
     .update(cronJobs)
     .set({
       lastRunAt: sql`now()`,
       nextRunAt,
+      status: nextRunAt === null ? "done" : undefined,
+      retryCount: 0,
     })
+    .where(eq(cronJobs.id, id))
+    .returning();
+  return row ?? null;
+}
+
+/**
+ * Records a failed attempt: bump retry_count and reschedule next_run_at to
+ * `now + backoffSecs`. If `failed` is true, marks the row status="failed".
+ */
+export async function recordCronJobFailure(
+  db: Db,
+  id: string,
+  opts: { nextRunAt: Date | null; failed: boolean },
+): Promise<CronJob | null> {
+  const [row] = await db
+    .update(cronJobs)
+    .set({
+      retryCount: sql`${cronJobs.retryCount} + 1`,
+      nextRunAt: opts.nextRunAt,
+      status: opts.failed ? "failed" : undefined,
+    })
+    .where(eq(cronJobs.id, id))
+    .returning();
+  return row ?? null;
+}
+
+export async function cancelCronJob(db: Db, id: string): Promise<CronJob | null> {
+  const [row] = await db
+    .update(cronJobs)
+    .set({ status: "cancelled", nextRunAt: null })
     .where(eq(cronJobs.id, id))
     .returning();
   return row ?? null;

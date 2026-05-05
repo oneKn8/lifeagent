@@ -9,3 +9,31 @@ export {
   type AddMemoryFactInput,
 } from "./queries/memory_facts";
 export { createUser, getUserByTelegramId, type User, type CreateUserInput } from "./queries/users";
+export {
+  appendMessage,
+  recentMessages,
+  type Message,
+  type AppendMessageInput,
+} from "./queries/messages";
+export {
+  createEvent,
+  getEventById,
+  getEventsForDay,
+  updateEventStatus,
+  getUpcomingEventsNeedingPings,
+  type Event,
+  type EventStatus,
+  type CreateEventInput,
+  type UpdateEventStatusExtras,
+} from "./queries/events";
+export {
+  createCronJob,
+  getCronJobById,
+  getDueCronJobs,
+  markCronJobRan,
+  recordCronJobFailure,
+  cancelCronJob,
+  type CronJob,
+  type CronJobKind,
+  type CreateCronJobInput,
+} from "./queries/cron_jobs";
