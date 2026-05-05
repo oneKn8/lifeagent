@@ -76,6 +76,21 @@ describe("events queries", () => {
     expect(rows[0]?.title).toBe("Today");
   });
 
+  it("getEventsForDay excludes events starting at exactly next-day midnight (half-open interval)", async () => {
+    const user = await seedUser(db);
+    await createEvent(db, {
+      userId: user.id,
+      source: "manual",
+      title: "Boundary",
+      startAt: new Date("2026-05-05T00:00:00Z"),
+      endAt: new Date("2026-05-05T01:00:00Z"),
+    });
+
+    const day = new Date("2026-05-04T00:00:00Z");
+    const rows = await getEventsForDay(db, user.id, day);
+    expect(rows.length).toBe(0);
+  });
+
   it("updateEventStatus sets status and optional fields", async () => {
     const user = await seedUser(db);
     const ev = await createEvent(db, {

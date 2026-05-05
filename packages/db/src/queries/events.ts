@@ -1,4 +1,4 @@
-import { and, eq, gte, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, isNull, lt, lte, sql } from "drizzle-orm";
 import type { Db } from "../client";
 import { events } from "../schema";
 
@@ -58,7 +58,7 @@ export async function getEventsForDay(db: Db, userId: string, day: Date): Promis
   return db
     .select()
     .from(events)
-    .where(and(eq(events.userId, userId), gte(events.startAt, start), lte(events.startAt, end)));
+    .where(and(eq(events.userId, userId), gte(events.startAt, start), lt(events.startAt, end)));
 }
 
 export interface UpdateEventStatusExtras {
