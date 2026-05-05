@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@lifeagent/db": "workspace:*",
-    "@lifeagent/types": "workspace:*"
+    "@lifeagent/types": "workspace:*",
+    "zod": "^4.4.3"
   }
 }
