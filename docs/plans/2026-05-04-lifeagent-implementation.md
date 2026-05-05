@@ -4,9 +4,9 @@
 
 **Goal:** Build lifeagent v1 — a Bun/TypeScript runtime with Telegram bot, activity-verified accountability (Strava/GitHub/Wakatime), Postgres state, web dashboard, and 5 markdown skills, shippable as a one-command `docker compose up` self-host.
 
-**Architecture:** Monorepo with two apps (`agent` Bun service, `web` Next.js app) and two shared packages (`db`, `types`). Runtime is custom and minimal (~800 LoC) implementing tool registry, cron scheduler, skill loader, memory store, hooks. Brain is provider-swappable (Anthropic primary, OpenAI + Ollama adapters). Verifiers cross-reference user replies against real activity APIs.
+**Architecture:** Monorepo with two apps (`agent` Bun service, `web` Next.js app) and two shared packages (`db`, `types`). Runtime is custom and minimal (~800 LoC) implementing tool registry, cron scheduler, skill loader, memory store, hooks. Brain is provider-swappable, **OpenRouter (free tier) is primary** with Ollama as a local fallback; Anthropic/OpenAI are optional via env. Verifiers cross-reference user replies against real activity APIs.
 
-**Tech Stack:** Bun, TypeScript, Next.js 15, Tailwind v4, shadcn/ui, Drizzle ORM, Postgres, grammY, Anthropic SDK, OpenAI SDK, Zod, vitest.
+**Tech Stack:** Bun, TypeScript, Next.js 15, Tailwind v4, shadcn/ui, Drizzle ORM, Postgres, grammY, OpenAI SDK (used as OpenRouter client — same wire format), Zod, `bun:test` runner.
 
 ---
 
@@ -18,7 +18,7 @@
 | 1 | DB schema, migrations, Drizzle queries | 0 |
 | 2 | Runtime: tool registry + skill loader + memory + hooks | 1 |
 | 3 | Runtime: cron scheduler + agent loop + SDK | 2 |
-| 4 | Brain: Anthropic adapter + provider interface | 2 |
+| 4 | Brain: provider interface + OpenRouter adapter (free models, rotation, model catalog cache) | 2 |
 | 5 | Telegram bot v0 — receive + reply, no agent loop wired | 0 |
 | 6 | Skills (5 markdown files) wired to brain | 4, 2 |
 | 7 | Manual source adapter — events from chat | 3, 5, 6 |
@@ -30,7 +30,7 @@
 | 13 | CLI (`lifeagent start | plan | status | inbox | replay | verify-now`) | 3 |
 | 14 | Web dashboard scaffold + auth (Telegram Login Widget) | 1 |
 | 15 | Web dashboard pages (timeline, history, memory, settings) | 14 |
-| 16 | OpenAI + Ollama brain adapters | 4 |
+| 16 | Optional Anthropic + Ollama brain adapters (env-gated) | 4 |
 | 17 | Docker compose, Dockerfiles, README, demo gif | all |
 
 Total estimated tasks: ~110. Each phase ends with all tests passing + a green commit.
@@ -689,52 +689,121 @@ Total estimated tasks: ~110. Each phase ends with all tests passing + a green co
 
 ---
 
-## Phase 4 — Brain: provider interface + Anthropic adapter
+## Phase 4 — Brain: provider interface + OpenRouter adapter
 
-### Task 4.1 — Brain interface
+> **Note:** `apps/agent/src/brain/types.ts` already exists from Phase 3 (it was created so loop/SDK could be tested with mocks). Verify it matches the spec below; extend if needed.
+
+### Task 4.1 — Brain interface (verify/extend)
+
+**File:** `apps/agent/src/brain/types.ts`
+
+Required types (extend existing if missing anything):
+
+```ts
+export interface ChatInput {
+  system: string;
+  messages: Array<{ role: "user" | "assistant" | "tool"; content: string; toolCallId?: string }>;
+  tools?: Array<{ name: string; description: string; inputSchema: unknown }>;
+  model?: string;        // override model for this call
+  maxTokens?: number;
+  temperature?: number;
+}
+
+export type ChatChunk =
+  | { type: "text"; text: string }
+  | { type: "tool_call"; id: string; name: string; input: unknown }
+  | { type: "stop"; reason: string };
+
+export interface Brain {
+  chat(input: ChatInput): AsyncIterable<ChatChunk>;
+  parseStructured<T>(prompt: string, schema: import("zod").ZodType<T>): Promise<T>;
+}
+```
+
+If `parseStructured` isn't on the existing interface yet, add it. (It's needed by Phase 8's reply parser.)
+
+**Commit if changes made:** `feat(brain): finalize provider interface`
+
+### Task 4.2 — OpenRouter adapter
 
 **Files:**
-- Create: `apps/agent/src/brain/types.ts`
-- Create: `apps/agent/src/brain/index.ts`
+- Create: `apps/agent/src/brain/openrouter.ts`
+- Create: `apps/agent/src/brain/openrouter.test.ts`
+- Create: `apps/agent/src/brain/model-catalog.ts`
+- Create: `apps/agent/src/brain/model-catalog.test.ts`
 
-**Steps:**
+**OpenRouter context:**
+- API base: `https://openrouter.ai/api/v1`
+- OpenAI-compatible (`/chat/completions` with `stream: true`)
+- Free models (May 2026 chain): `meta-llama/llama-3.3-70b-instruct:free`, `deepseek/deepseek-chat:free`, `google/gemini-2.0-flash-exp:free`, `qwen/qwen-2.5-72b-instruct:free`, `mistralai/mistral-7b-instruct:free` (verify via `/api/v1/models?supported_parameters=tools&pricing.prompt=0`)
+- Tool calling: pass `tools` parameter using OpenAI-style `{ type: "function", function: { name, description, parameters } }`. Parameters is a JSON Schema — convert from Zod via `zod-to-json-schema`.
+- Required headers: `Authorization: Bearer ${OPENROUTER_API_KEY}`, `HTTP-Referer: https://github.com/<your>/lifeagent`, `X-Title: lifeagent`
+- Free-tier rate limit: ~20 req/min, ~50/day per IP (check current limits at openrouter.ai/docs)
 
-1. **Define types**
-   ```ts
-   export interface ChatInput {
-     system: string;
-     messages: Array<{ role: "user" | "assistant" | "tool"; content: string; toolCallId?: string }>;
-     tools?: Array<{ name: string; description: string; inputSchema: unknown }>;
-     model?: string;
-     maxTokens?: number;
-   }
-   export type ChatChunk =
-     | { type: "text"; text: string }
-     | { type: "tool_call"; id: string; name: string; input: unknown }
-     | { type: "stop"; reason: string };
-   export interface Brain {
-     chat(input: ChatInput): AsyncIterable<ChatChunk>;
-     parseStructured<T>(prompt: string, schema: import("zod").ZodType<T>): Promise<T>;
-   }
-   ```
+**Spec — `model-catalog.ts`:**
 
-2. **Commit:** `feat(brain): provider interface and chunk types`
+```ts
+export interface CatalogModel {
+  id: string;
+  name: string;
+  contextLength: number;
+  free: boolean;
+  supportsTools: boolean;
+}
 
-### Task 4.2 — Anthropic adapter
+export class ModelCatalog {
+  constructor(opts: { apiKey: string; cacheDir: string; ttlMs?: number /* default 6h */ });
+  async getFreeModels(): Promise<CatalogModel[]>; // ordered by reliability heuristic
+  async refresh(): Promise<void>;
+}
+```
 
-**Files:**
-- Create: `apps/agent/src/brain/anthropic.ts`
-- Create: `apps/agent/src/brain/anthropic.test.ts`
+Cache file: `<cacheDir>/openrouter-models.json` with `{ fetchedAt, models }`. Load if mtime within TTL, else fetch + write.
 
-**Steps:**
+**Spec — `openrouter.ts`:**
 
-1. **Add SDK** `cd apps/agent && bun add @anthropic-ai/sdk`
-2. **TDD with mock client:**
-   - `chat()` yields text chunks for an Anthropic streaming response
-   - Tool calls are emitted as `tool_call` chunks with parsed JSON input
-   - `parseStructured` uses tool-use to coerce a Zod schema response
-3. **Implement.** Map the Anthropic stream events (`message_delta`, `content_block_delta`, `tool_use`) into our chunk type.
-4. **Commit:** `feat(brain): Anthropic adapter with streaming + tool use`
+```ts
+export class OpenRouterBrain implements Brain {
+  constructor(opts: {
+    apiKey: string;
+    catalog: ModelCatalog;
+    primaryChain?: string[]; // default: read from catalog free models, top 5
+    referer?: string;        // default: https://github.com/lifeagent
+    appTitle?: string;       // default: lifeagent
+  });
+
+  async *chat(input: ChatInput): AsyncIterable<ChatChunk>;
+  async parseStructured<T>(prompt: string, schema: ZodType<T>): Promise<T>;
+}
+```
+
+`chat` semantics:
+- Try models from `primaryChain` in order
+- For each: open SSE stream to `/chat/completions`
+- Parse OpenAI-style stream events (`choices[0].delta.content`, `choices[0].delta.tool_calls`)
+- Yield `text` chunks for content, `tool_call` chunks for fully-formed tool calls (accumulate fragments per `tool_calls[i].id`)
+- On stream success: yield `stop` and return
+- On retryable error (HTTP 408/425/429/5xx, network error): try next model in chain
+- On terminal error (4xx other than the retryable list): yield `stop { reason: "error" }` and stop
+
+`parseStructured`: build a single tool-call request with the schema converted to JSON Schema, force the model to call that tool, parse the result.
+
+**TDD:**
+
+For tests use a fake HTTP server (e.g., `Bun.serve` on a random port returning canned SSE responses). Test cases:
+- single text response yields text chunks then stop
+- multi-fragment tool call accumulates and emits one `tool_call`
+- 429 on first model triggers fallback to second model
+- non-retryable 401 yields stop with error reason
+- `parseStructured` returns parsed Zod-typed value
+
+Add deps:
+```bash
+cd apps/agent && bun add openai zod-to-json-schema
+```
+(We use the official `openai` SDK pointed at OpenRouter's base URL — same wire format.)
+
+**Commit:** `feat(brain): OpenRouter adapter with free-model rotation and catalog cache`
 
 ---
 
@@ -1077,11 +1146,19 @@ Commit per page.
 
 ---
 
-## Phase 16 — OpenAI + Ollama brain adapters
+## Phase 16 — Optional Anthropic + Ollama brain adapters
 
-Same shape as Anthropic adapter. TDD with mocked clients.
+Same shape as the OpenRouter adapter (Phase 4). Both are off by default and only constructed if their respective env vars are set:
+- `ANTHROPIC_API_KEY` set → `AnthropicBrain` available, can be selected via `BRAIN_PROVIDER=anthropic`
+- `OLLAMA_BASE_URL` set (default `http://localhost:11434`) → `OllamaBrain` available, can be selected via `BRAIN_PROVIDER=ollama`
 
-Commit per adapter.
+`AnthropicBrain`: uses `@anthropic-ai/sdk`, maps Anthropic streaming events (`message_delta`, `content_block_delta`, `tool_use`) into our chunk type. Supports tool use natively.
+
+`OllamaBrain`: uses Ollama's `/api/chat` with streaming. Tool support limited to models that advertise it (`llama3.1`, `qwen2.5`, etc.). For models without tool support, fall back to a "JSON in fenced block" prompt convention and parse manually.
+
+`BrainFactory(env)` returns the appropriate brain based on `BRAIN_PROVIDER` env (default `openrouter`). All adapters implement the same `Brain` interface from Phase 4.
+
+TDD with mocked HTTP for both. Commit per adapter.
 
 ---
 

@@ -184,9 +184,9 @@ The agent calls verifiers when a post-event reply lands. If any verifier returns
 ### 5.6 Brain (LLM provider)
 
 Provider-swappable interface. v1 ships:
-- **Anthropic Claude** (Sonnet for chat/planning, Haiku for cheap parsing/summary)
-- **OpenAI** adapter (fallback)
-- **Ollama** adapter (local, for self-hosters who don't want any cloud LLM)
+- **OpenRouter** (primary) — free-tier models for $0/month personal use. Default chain (with retryable-only fallback): `meta-llama/llama-3.3-70b-instruct:free`, `deepseek/deepseek-chat:free`, `google/gemini-2.0-flash-exp:free`, `qwen/qwen-2.5-72b-instruct:free`. Live model catalog at `/models` cached 6h on disk; chain auto-augmented with any new free model.
+- **Ollama** (secondary) — local, fully offline option for self-hosters who want zero cloud calls.
+- **Anthropic / OpenAI adapters** — optional, off by default. Users with API keys can swap in via env. Useful when free-tier rate limits aren't enough.
 
 ```typescript
 interface Brain {
@@ -292,7 +292,7 @@ verification_runs
 | DB | **Postgres** + **Drizzle ORM** | Concurrent access from runtime + web; type-safe queries. |
 | Telegram | **grammY** | Modern, type-safe, plugin-friendly. |
 | Cron | **node-cron** + persistent rows in `cron_jobs` | Keep it simple; upgrade to BullMQ if needed later. |
-| LLM | **Anthropic SDK** primary; OpenAI + Ollama adapters | Provider-swappable. |
+| LLM | **OpenRouter** (free tier) primary via OpenAI-compatible API; **Ollama** local adapter; optional Anthropic/OpenAI via env | Free for personal use; provider-swappable. |
 | Auth (web) | **Telegram Login Widget** | Zero-friction for the one user. |
 | Container | **Docker compose** | One-command self-host. |
 | License | **MIT** | OSS-friendly, forkable. |
@@ -340,7 +340,7 @@ lifeagent/
 ### IN
 - Custom mini-runtime (tools, cron, skills, memory, hooks, loop, SDK)
 - Telegram bot adapter (grammY, webhook + long-poll)
-- LLM brain with Anthropic + OpenAI + Ollama adapters
+- LLM brain with OpenRouter (primary, free tier) + Ollama adapters; optional Anthropic/OpenAI adapters via env
 - Source adapters: `manual`, `gcal`
 - Verifiers: `strava`, `github`, `wakatime`
 - 5 skills: `lifeagent`, `daily-brief`, `daily-summary`, `reschedule`, `memory-extractor`
