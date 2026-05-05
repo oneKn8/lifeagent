@@ -31,6 +31,18 @@ export {
   type UpdateEventStatusExtras,
 } from "./queries/events";
 export {
+  recordVerificationRun,
+  getVerificationsForEvent,
+  type VerificationRun,
+  type RecordVerificationRunInput,
+} from "./queries/verification_runs";
+export {
+  getIntegration,
+  upsertIntegration,
+  type Integration,
+  type UpsertIntegrationInput,
+} from "./queries/integrations";
+export {
   createCronJob,
   getCronJobById,
   getDueCronJobs,
