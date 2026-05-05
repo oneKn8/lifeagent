@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lifeagent
+      POSTGRES_PASSWORD: lifeagent
+      POSTGRES_DB: lifeagent
+    ports:
+      - "5544:5432"
+    volumes:
+      - lifeagent_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifeagent -d lifeagent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://lifeagent:lifeagent@postgres:5432/lifeagent
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}
+      BRAIN_PROVIDER: ${BRAIN_PROVIDER:-openrouter}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OWNER_CONTACT_TELEGRAM_ID: ${OWNER_CONTACT_TELEGRAM_ID:-}
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://lifeagent:lifeagent@postgres:5432/lifeagent
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SESSION_SECRET: ${SESSION_SECRET:-${ENCRYPTION_KEY}}
+      NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
+
+volumes:
+  lifeagent_pg:
+
+networks:
+  default:
+    name: lifeagent

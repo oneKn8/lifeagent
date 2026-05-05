@@ -7,7 +7,10 @@ It reads your fitness, code activity, and screen time, and cross-references
 your replies against reality. It won't accept "I did it" if your phone says
 you didn't.
 
-**Status:** pre-alpha, under active development. Phases 0-5 of 17 complete.
+**Status:** v0.1.0. All 17 phases of the initial build are complete: Telegram
+bot, manual + Google Calendar event sources, pre/post pings with escalation
+ladder, Strava/GitHub/Wakatime verifiers, confrontation logic, CLI, and a
+Next.js dashboard.
 
 ## Why
 
@@ -83,8 +86,26 @@ bun test
 bun run lint
 ```
 
-The agent isn't wired into a single entry point yet — see the implementation
-plan for which phase exposes the runnable bot.
+## Running with Docker
+
+```bash
+cp -n .env.example .env   # fill it in first
+docker compose up -d
+```
+
+This brings up Postgres, the agent runtime, and the Next.js dashboard on a
+shared `lifeagent` network. The dashboard is on `http://localhost:3000`. The
+bot starts polling Telegram immediately.
+
+## CLI
+
+A `lifeagent` CLI is shipped alongside the agent for read-only operations:
+
+```bash
+bun apps/agent/src/cli/index.ts status
+bun apps/agent/src/cli/index.ts inbox
+bun apps/agent/src/cli/index.ts --help
+```
 
 ## Contributing
 
