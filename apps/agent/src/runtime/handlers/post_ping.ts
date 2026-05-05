@@ -1,8 +1,9 @@
 import { type Db, type Event, getEventById, updateEvent } from "@lifeagent/db";
-import type { CronHandler } from "../cron";
+import type { CronHandler, CronScheduler } from "../cron";
 import type { AgentLoop } from "../loop";
 import type { MemoryStore } from "../memory";
 import type { SkillLoader } from "../skills";
+import { scheduleEscalations } from "./escalation";
 
 export interface PostPingDeps {
   db: Db;
@@ -11,6 +12,10 @@ export interface PostPingDeps {
   memory: MemoryStore;
   /** Top-N memory facts to include in the prompt. Default 8. */
   memoryTopN?: number;
+  /** If supplied, schedule escalation cron jobs at +5/+15/+30 min after post-ping. */
+  cron?: CronScheduler;
+  /** Override escalation delays in minutes. Default [5, 15, 30]. */
+  escalationStepsMinutes?: [number, number, number];
 }
 
 export function createPostPingHandler(deps: PostPingDeps): CronHandler {
@@ -35,7 +40,18 @@ export function createPostPingHandler(deps: PostPingDeps): CronHandler {
       eventId: event.id,
     });
 
-    await updateEvent(deps.db, event.id, { postPingSentAt: new Date() });
+    const sentAt = new Date();
+    await updateEvent(deps.db, event.id, { postPingSentAt: sentAt });
+
+    if (deps.cron) {
+      await scheduleEscalations({
+        cron: deps.cron,
+        userId: event.userId,
+        eventId: event.id,
+        stepsMinutes: deps.escalationStepsMinutes,
+        now: sentAt,
+      });
+    }
   };
 }
 

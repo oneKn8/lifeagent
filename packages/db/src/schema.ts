@@ -32,9 +32,11 @@ export const verificationStatus = pgEnum("verification_status", [
 export const cronKind = pgEnum("cron_kind", [
   "pre_ping",
   "post_ping",
+  "escalation",
   "morning_brief",
   "nightly_summary",
   "verify",
+  "gcal_sync",
 ]);
 
 // ----- Tables -----

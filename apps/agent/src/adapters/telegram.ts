@@ -66,6 +66,10 @@ export class TelegramAdapter {
     await this.api.sendMessage(this.ownerId, text);
   }
 
+  async sendTo(chatId: number | string, text: string): Promise<void> {
+    await this.api.sendMessage(chatId, text);
+  }
+
   async start(): Promise<void> {
     const bot = this.ensureBot();
     bot.on("message:text", async (ctx) => {

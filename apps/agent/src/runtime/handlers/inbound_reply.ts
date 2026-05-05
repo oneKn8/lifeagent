@@ -2,6 +2,8 @@ import {
   type Db,
   type EventStatus,
   appendMessage,
+  cancelCronJob,
+  getActiveCronJobsByEventId,
   getEventById,
   getLatestPendingPostPingEvent,
   updateEventStatus,
@@ -78,6 +80,12 @@ ${input.text}`;
       userReplyText: input.text,
       parsedState: parsed,
     });
+
+    // Cancel any pending escalations now that the user has replied.
+    const pendingEscalations = await getActiveCronJobsByEventId(deps.db, event.id, "escalation");
+    for (const job of pendingEscalations) {
+      await cancelCronJob(deps.db, job.id);
+    }
 
     let confrontResult: ConfrontOutput | undefined;
     if (
