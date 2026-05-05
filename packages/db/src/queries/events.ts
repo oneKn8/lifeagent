@@ -122,6 +122,11 @@ export interface UpdateEventPatch {
   notes?: string;
   prePingAt?: Date | null;
   postPingAt?: Date | null;
+  prePingSentAt?: Date | null;
+  postPingSentAt?: Date | null;
+  userReplyText?: string | null;
+  parsedState?: unknown;
+  verificationStatus?: VerificationStatusValue;
 }
 
 /**
@@ -140,8 +145,34 @@ export async function updateEvent(
   if (patch.notes !== undefined) set.notes = patch.notes;
   if (patch.prePingAt !== undefined) set.prePingAt = patch.prePingAt;
   if (patch.postPingAt !== undefined) set.postPingAt = patch.postPingAt;
+  if (patch.prePingSentAt !== undefined) set.prePingSentAt = patch.prePingSentAt;
+  if (patch.postPingSentAt !== undefined) set.postPingSentAt = patch.postPingSentAt;
+  if (patch.userReplyText !== undefined) set.userReplyText = patch.userReplyText;
+  if (patch.parsedState !== undefined) set.parsedState = patch.parsedState;
+  if (patch.verificationStatus !== undefined) set.verificationStatus = patch.verificationStatus;
   const [row] = await db.update(events).set(set).where(eq(events.id, id)).returning();
   return row ?? null;
+}
+
+/**
+ * The most recent event for a user where the post-ping has been sent but the
+ * user hasn't replied yet. This is the event a free-form Telegram reply maps
+ * to.
+ */
+export async function getLatestPendingPostPingEvent(db: Db, userId: string): Promise<Event | null> {
+  const rows = await db
+    .select()
+    .from(events)
+    .where(
+      and(
+        eq(events.userId, userId),
+        isNotNull(events.postPingSentAt),
+        isNull(events.userReplyText),
+      ),
+    )
+    .orderBy(sql`${events.postPingSentAt} desc`)
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 /**

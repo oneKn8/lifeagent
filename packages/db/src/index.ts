@@ -20,6 +20,7 @@ export {
   getEventById,
   getEventsForDay,
   getEventsBySourceInRange,
+  getLatestPendingPostPingEvent,
   updateEvent,
   updateEventStatus,
   getUpcomingEventsNeedingPings,
