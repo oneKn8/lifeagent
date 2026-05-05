@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lifeagent
+      POSTGRES_PASSWORD: lifeagent
+      POSTGRES_DB: lifeagent
+    ports:
+      - "5544:5432"
+    volumes:
+      - lifeagent_pg:/var/lib/postgresql/data
+volumes:
+  lifeagent_pg:
