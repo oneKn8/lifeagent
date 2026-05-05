@@ -2,15 +2,19 @@ import {
   type Db,
   type EventStatus,
   appendMessage,
+  getEventById,
   getLatestPendingPostPingEvent,
   updateEventStatus,
 } from "@lifeagent/db";
 import { z } from "zod";
 import type { Brain } from "../../brain/types";
+import type { ConfrontOutput, createConfrontStep } from "./confront";
 
 export interface InboundReplyDeps {
   db: Db;
   brain: Brain;
+  /** Optional confrontation step from createConfrontStep. */
+  confront?: ReturnType<typeof createConfrontStep>;
 }
 
 export interface InboundReplyInput {
@@ -24,6 +28,7 @@ export interface InboundReplyResult {
   status?: EventStatus;
   slippedMinutes?: number;
   blocker?: string;
+  confront?: ConfrontOutput;
 }
 
 const replySchema = z.object({
@@ -74,12 +79,28 @@ ${input.text}`;
       parsedState: parsed,
     });
 
+    let confrontResult: ConfrontOutput | undefined;
+    if (
+      deps.confront &&
+      (parsed.status === "done" || parsed.status === "partial" || parsed.status === "skipped")
+    ) {
+      // Re-load to get the freshly-updated row.
+      const updated = await getEventById(deps.db, event.id);
+      if (updated) {
+        confrontResult = await deps.confront({
+          event: updated,
+          reportedStatus: parsed.status,
+        });
+      }
+    }
+
     return {
       matched: true,
       eventId: event.id,
       status: parsed.status,
       slippedMinutes: parsed.slipped_minutes,
       blocker: parsed.blocker,
+      confront: confrontResult,
     };
   };
 }
